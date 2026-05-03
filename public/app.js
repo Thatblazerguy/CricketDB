@@ -6,11 +6,9 @@
 let currentUser = null;
 let allPlayers  = [];
 let currentFavTab = 'player';
-let liveSyncInterval = null;
 
 // ─── INIT ─────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  initTheme();
   await checkAuth();
   setupSearchEnter();
   navigate('home');
@@ -168,66 +166,7 @@ function navigate(page) {
     case 'import':      show('page-import'); break;
     default: show('page-home');
   }
-  
-  handleLiveSync(page);
   window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function handleLiveSync(page) {
-  // Clear any existing interval
-  if (liveSyncInterval) clearInterval(liveSyncInterval);
-  
-  const badges = document.querySelectorAll('.live-badge');
-  badges.forEach(b => b.classList.add('hidden'));
-
-  if (page === 'players' || page === 'matches') {
-    const badge = document.getElementById(`liveBadge-${page}`);
-    if (badge) badge.classList.remove('hidden');
-
-    // Setup new interval to refresh data every 3 seconds
-    liveSyncInterval = setInterval(() => {
-      console.log(`Live Sync: Refreshing ${page} data...`);
-      if (page === 'players') {
-        const q = document.getElementById('playersSearch').value.trim();
-        const country = document.getElementById('countryFilter').value;
-        const role = document.getElementById('roleFilter').value;
-        // Silent update (don't show loader)
-        loadPlayersSilent(q, country, role);
-      } else if (page === 'matches') {
-        loadMatchesSilent();
-      }
-    }, 3000);
-  }
-}
-
-async function loadPlayersSilent(q = '', country = '', role = '') {
-  try {
-    let url = '/api/players?';
-    if (q) url += `q=${encodeURIComponent(q)}&`;
-    if (country) url += `country=${encodeURIComponent(country)}&`;
-    if (role) url += `role=${encodeURIComponent(role)}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (JSON.stringify(data) !== JSON.stringify(allPlayers)) {
-      allPlayers = data;
-      const grid = document.getElementById('playersGrid');
-      grid.innerHTML = '';
-      allPlayers.forEach(p => grid.appendChild(playerCard(p)));
-    }
-  } catch (e) {}
-}
-
-async function loadMatchesSilent() {
-  try {
-    const res = await fetch('/api/matches');
-    const matches = await res.json();
-    const grid = document.getElementById('matchesGrid');
-    // Check if count or data has changed (simple check)
-    if (grid.children.length !== matches.length) {
-      grid.innerHTML = '';
-      matches.forEach(m => grid.appendChild(matchCard(m)));
-    }
-  } catch (e) {}
 }
 
 // ─── SEARCH ───────────────────────────────────
@@ -840,26 +779,3 @@ function showToast(msg, type = '') {
   toast.classList.remove('hidden');
   setTimeout(() => toast.classList.add('hidden'), 3000);
 }
-
-// ─── THEME TOGGLE ─────────────────────────────
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  updateThemeIcon(savedTheme);
-}
-
-function toggleTheme() {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
-  updateThemeIcon(newTheme);
-}
-
-function updateThemeIcon(theme) {
-  const iconEl = document.querySelector('#themeToggle .theme-icon');
-  if (iconEl) {
-    iconEl.textContent = theme === 'dark' ? '☀️' : '🌙';
-  }
-}
-
