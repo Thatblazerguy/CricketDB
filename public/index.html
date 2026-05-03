@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cricket Database</title>
+  <meta name="description"
+    content="Explore players, matches and tournaments in the ultimate cricket database. Search stats, follow favorites, and stay updated." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ───────────────── NAVBAR ───────────────── -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a class="nav-brand" href="#" onclick="navigate('home')"></a>Cricket Database</a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#" onclick="navigate('home')" data-page="home">Home</a></li>
+        <li><a href="#" onclick="navigate('players')" data-page="players">Players</a></li>
+        <li><a href="#" onclick="navigate('matches')" data-page="matches">Matches</a></li>
+        <li><a href="#" onclick="navigate('tournaments')" data-page="tournaments">Tournaments</a></li>
+        <li id="navForYou" class="hidden"><a href="#" onclick="navigate('foryou')" data-page="foryou">For You</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div id="authLoggedOut" class="nav-auth">
+          <button class="btn-ghost" onclick="openModal('loginModal')">Login</button>
+          <button class="btn-primary" onclick="openModal('signupModal')">Sign Up</button>
+        </div>
+        <div id="authLoggedIn" class="nav-auth hidden">
+          <span class="nav-username" id="navUsername"></span>
+          <button class="btn-ghost" onclick="logout()">Logout</button>
+        </div>
+        <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+          <span class="theme-icon">🌙</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ───────────────── PAGES ───────────────── -->
+  <main id="appRoot">
+
+    <!-- HOME PAGE -->
+    <section id="page-home" class="page active">
+      <div class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+          <h1 class="hero-title" id="heroWelcomeText">Cricket Database</h1>
+          <p class="hero-subtitle">Search players, matches and tournaments</p>
+          <div class="search-bar-wrap">
+            <div class="search-bar">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input id="heroSearch" type="text" placeholder="Search players, teams, tournaments..."
+                autocomplete="off" />
+              <button id="heroSearchBtn" onclick="doSearch()">Search</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features-section">
+        <h2 class="section-title">Explore</h2>
+        <div class="features-grid">
+          <div class="feature-card" onclick="navigate('players')">
+            <div class="feature-icon">🧑‍🏏</div>
+            <h3>Players</h3>
+            <p>Browse detailed profiles and career statistics for international cricketers across all formats.</p>
+            <span class="feature-link">View Players →</span>
+          </div>
+          <div class="feature-card" onclick="navigate('matches')">
+            <div class="feature-icon">🏟️</div>
+            <h3>Matches</h3>
+            <p>Relive iconic matches with full scorecards, results and key highlights from around the world.</p>
+            <span class="feature-link">View Matches →</span>
+          </div>
+          <div class="feature-card" onclick="navigate('tournaments')">
+            <div class="feature-icon">🏆</div>
+            <h3>Tournaments</h3>
+            <p>Explore ICC tournaments with complete points tables, top run-scorers and wicket-takers.</p>
+            <span class="feature-link">View Tournaments →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-banner">
+        <div class="stat-pill"><span class="stat-num">10+</span><span>Players</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill"><span class="stat-num">6</span><span>Matches</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill"><span class="stat-num">4</span><span>Tournaments</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill"><span class="stat-num">30+</span><span>Stat Records</span></div>
+      </div>
+    </section>
+
+    <!-- PLAYERS PAGE -->
+    <section id="page-players" class="page">
+      <div class="page-header">
+        <div>
+          <h1 style="display: flex; align-items: center; gap: 0.8rem;">
+            Players 
+            <span id="liveBadge-players" class="live-badge hidden">LIVE</span>
+          </h1>
+          <p class="page-desc">International cricketers across all formats</p>
+        </div>
+        <div class="page-search" style="display: flex; gap: 1rem; align-items: center; max-width: 800px;">
+          <input id="playersSearch" type="text" placeholder="Search players..." oninput="filterPlayers()"
+            style="flex: 1;" />
+          <select id="countryFilter" onchange="filterPlayers()"
+            style="padding: 0.8rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg2); color: var(--primary); font-family: inherit; font-size: 0.95rem;">
+            <option value="">All Countries</option>
+            <option value="India">India</option>
+            <option value="Australia">Australia</option>
+            <option value="England">England</option>
+            <option value="Pakistan">Pakistan</option>
+            <option value="South Africa">South Africa</option>
+            <option value="New Zealand">New Zealand</option>
+            <option value="West Indies">West Indies</option>
+            <option value="Sri Lanka">Sri Lanka</option>
+            <option value="Bangladesh">Bangladesh</option>
+            <option value="Afghanistan">Afghanistan</option>
+          </select>
+          <select id="roleFilter" onchange="filterPlayers()"
+            style="padding: 0.8rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg2); color: var(--primary); font-family: inherit; font-size: 0.95rem;">
+            <option value="">All Roles</option>
+            <option value="Batter">Batter</option>
+            <option value="Bowler">Bowler</option>
+            <option value="All-Rounder">All-Rounder</option>
+            <option value="WK-Batter">WK-Batter</option>
+          </select>
+        </div>
+      </div>
+      <div id="playersGrid" class="cards-grid"></div>
+    </section>
+
+    <!-- PLAYER DETAIL PAGE -->
+    <section id="page-player-detail" class="page">
+      <button class="back-btn" onclick="navigate('players')">← Back to Players</button>
+      <div id="playerDetailContent"></div>
+    </section>
+
+    <!-- MATCHES PAGE -->
+    <section id="page-matches" class="page">
+      <div class="page-header">
+        <div>
+          <h1 style="display: flex; align-items: center; gap: 0.8rem;">
+            Matches
+            <span id="liveBadge-matches" class="live-badge hidden">LIVE</span>
+          </h1>
+          <p class="page-desc">Iconic matches from around the world</p>
+        </div>
+      </div>
+      <div id="matchesGrid" class="cards-grid"></div>
+    </section>
+
+    <!-- MATCH DETAIL PAGE -->
+    <section id="page-match-detail" class="page">
+      <button class="back-btn" onclick="navigate('matches')">← Back to Matches</button>
+      <div id="matchDetailContent"></div>
+    </section>
+
+    <!-- TOURNAMENTS PAGE -->
+    <section id="page-tournaments" class="page">
+      <div class="page-header">
+        <div>
+          <h1>Tournaments</h1>
+          <p class="page-desc">ICC events and major series</p>
+        </div>
+      </div>
+      <div id="tournamentsGrid" class="cards-grid"></div>
+    </section>
+
+    <!-- TOURNAMENT DETAIL PAGE -->
+    <section id="page-tournament-detail" class="page">
+      <button class="back-btn" onclick="navigate('tournaments')">← Back to Tournaments</button>
+      <div id="tournamentDetailContent"></div>
+    </section>
+
+    <!-- FOR YOU PAGE -->
+    <section id="page-foryou" class="page">
+      <div class="page-header">
+        <div>
+          <h1 id="foryouTitle">For You</h1>
+          <p class="page-desc">Your personalised cricket dashboard</p>
+        </div>
+        <button class="btn-primary" onclick="openModal('addFavModal')">+ Add Favourite</button>
+      </div>
+      <div id="foryouContent"></div>
+    </section>
+
+    <!-- IMPORT PAGE (accessible via footer or nav) -->
+    <section id="page-import" class="page">
+      <div class="page-header">
+        <div>
+          <h1>Import Data</h1>
+          <p class="page-desc">Upload CSV or Excel files to add data to the database</p>
+        </div>
+        <button class="back-btn" onclick="navigate('home')">← Back</button>
+      </div>
+      <div class="import-container">
+        <div class="import-card">
+          <h3>Upload File</h3>
+          <p>Supported formats: <strong>.csv</strong>, <strong>.xlsx</strong>, <strong>.xls</strong></p>
+          <div class="import-form">
+            <label>Select table to import into:</label>
+            <select id="importTable">
+              <option value="players">Players</option>
+              <option value="matches">Matches</option>
+            </select>
+            <label>Select file:</label>
+            <input type="file" id="importFile" accept=".csv,.xlsx,.xls" />
+            <button class="btn-primary" onclick="doImport()">Upload & Import</button>
+          </div>
+          <div id="importResult" class="import-result hidden"></div>
+        </div>
+        <div class="import-card">
+          <h3>CSV Format Guide</h3>
+          <p><strong>Players CSV columns:</strong></p>
+          <code>name, country, role, batting_style, bowling_style, born</code>
+          <p style="margin-top:1rem"><strong>Matches CSV columns:</strong></p>
+          <code>team1, team2, date, venue, format, result, score_team1, score_team2, highlights</code>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ───────────────── MODALS ───────────────── -->
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal-overlay" onclick="closeModalOutside(event,'loginModal')">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+      <h2>Welcome Back</h2>
+      <p class="modal-sub">Sign in to your account</p>
+      <form onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label>Email</label>
+          <input id="loginEmail" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" required />
+        </div>
+        <div id="loginError" class="form-error hidden"></div>
+        <button type="submit" class="btn-primary full-width">Login</button>
+      </form>
+      <p class="modal-switch">Don't have an account? <a href="#" onclick="switchModal('loginModal','signupModal')">Sign
+          Up</a></p>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div id="signupModal" class="modal-overlay" onclick="closeModalOutside(event,'signupModal')">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('signupModal')">✕</button>
+      <h2>Create Account</h2>
+      <p class="modal-sub">Join Cricket Database today</p>
+      <form onsubmit="doSignup(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <input id="signupUsername" type="text" placeholder="your_name" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input id="signupEmail" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input id="signupPassword" type="password" placeholder="••••••••" required minlength="6" />
+        </div>
+        <div id="signupError" class="form-error hidden"></div>
+        <button type="submit" class="btn-primary full-width">Create Account</button>
+      </form>
+      <p class="modal-switch">Already have an account? <a href="#"
+          onclick="switchModal('signupModal','loginModal')">Login</a></p>
+    </div>
+  </div>
+
+  <!-- Add Favourite Modal -->
+  <div id="addFavModal" class="modal-overlay" onclick="closeModalOutside(event,'addFavModal')">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('addFavModal')">✕</button>
+      <h2>Add Favourite</h2>
+      <p class="modal-sub">Add a player or team to your favourites</p>
+      <div class="tab-group" style="margin-bottom:1.2rem">
+        <button class="tab-btn active" onclick="switchFavTab('player', this)">Player</button>
+        <button class="tab-btn" onclick="switchFavTab('team', this)">Team</button>
+      </div>
+      <div id="favPlayerTab">
+        <label>Select Player</label>
+        <select id="favPlayerSelect"
+          style="width:100%;padding:.75rem;border:1.5px solid #e5e5e5;border-radius:10px;font-size:.95rem;margin-top:.4rem"></select>
+      </div>
+      <div id="favTeamTab" class="hidden">
+        <label>Team Name</label>
+        <input id="favTeamInput" type="text" placeholder="e.g. India"
+          style="width:100%;padding:.75rem;border:1.5px solid #e5e5e5;border-radius:10px;font-size:.95rem;margin-top:.4rem;box-sizing:border-box" />
+      </div>
+      <div style="margin-top:1.2rem">
+        <button class="btn-primary full-width" onclick="addFavourite()">Add to Favourites</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --white: #ffffff;
+    --black: #000000;
+    --transparent: transparent;
+  }
+
+  .dark {
+    --white: #000000;
+    --black: #ffffff;
+  }
+}
+
+body {
+  @apply bg-zinc-50 text-slate-950 transition-colors duration-300;
+}
+
+.dark body {
+  @apply bg-zinc-900 text-slate-50;
+}
