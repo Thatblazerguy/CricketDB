@@ -6,9 +6,38 @@
 let currentUser = null;
 let allPlayers  = [];
 let currentFavTab = 'player';
+const themeStorageKey = 'cricket-db-theme';
+
+function getSavedTheme() {
+  return localStorage.getItem(themeStorageKey);
+}
+
+function getPreferredTheme() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme);
+  const icon = document.querySelector('.theme-icon');
+  if (icon) icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme);
+  localStorage.setItem(themeStorageKey, nextTheme);
+}
+
+function initTheme() {
+  const savedTheme = getSavedTheme();
+  applyTheme(savedTheme || getPreferredTheme());
+}
 
 // ─── INIT ─────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  initTheme();
   await checkAuth();
   setupSearchEnter();
   navigate('home');
