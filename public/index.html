@@ -18,12 +18,13 @@
   <!-- ───────────────── NAVBAR ───────────────── -->
   <nav id="navbar">
     <div class="nav-inner">
-      <a class="nav-brand" href="#" onclick="navigate('home')"></a>Cricket Database</a>
+      <a class="nav-brand" href="#" onclick="navigate('home')">Cricket Database</a>
       <ul class="nav-links" id="navLinks">
         <li><a href="#" onclick="navigate('home')" data-page="home">Home</a></li>
         <li><a href="#" onclick="navigate('players')" data-page="players">Players</a></li>
         <li><a href="#" onclick="navigate('matches')" data-page="matches">Matches</a></li>
         <li><a href="#" onclick="navigate('tournaments')" data-page="tournaments">Tournaments</a></li>
+        <li><a href="#" onclick="navigate('leaderboard')" data-page="leaderboard">Leaderboard</a></li>
         <li id="navForYou" class="hidden"><a href="#" onclick="navigate('foryou')" data-page="foryou">For You</a></li>
       </ul>
       <div class="nav-actions">
@@ -91,13 +92,13 @@
       </div>
 
       <div class="stats-banner">
-        <div class="stat-pill"><span class="stat-num">10+</span><span>Players</span></div>
+        <div class="stat-pill"><span class="stat-num">190</span><span>Players</span></div>
         <div class="stat-divider"></div>
-        <div class="stat-pill"><span class="stat-num">6</span><span>Matches</span></div>
+        <div class="stat-pill"><span class="stat-num">100</span><span>Matches</span></div>
         <div class="stat-divider"></div>
-        <div class="stat-pill"><span class="stat-num">4</span><span>Tournaments</span></div>
+        <div class="stat-pill"><span class="stat-num">Multiple</span><span>Tournaments</span></div>
         <div class="stat-divider"></div>
-        <div class="stat-pill"><span class="stat-num">30+</span><span>Stat Records</span></div>
+        <div class="stat-pill"><span class="stat-num">100+</span><span>Stat Records</span></div>
       </div>
     </section>
 
@@ -106,7 +107,7 @@
       <div class="page-header">
         <div>
           <h1 style="display: flex; align-items: center; gap: 0.8rem;">
-            Players 
+            Players
             <span id="liveBadge-players" class="live-badge hidden">LIVE</span>
           </h1>
           <p class="page-desc">International cricketers across all formats</p>
@@ -136,9 +137,37 @@
             <option value="All-Rounder">All-Rounder</option>
             <option value="WK-Batter">WK-Batter</option>
           </select>
+          <select id="sortPlayers" onchange="applySortPlayers()"
+            style="padding: 0.8rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg2); color: var(--primary); font-family: inherit; font-size: 0.95rem;">
+            <option value="">Sort By</option>
+            <option value="id-asc">ID ↑ (Lowest first)</option>
+            <option value="id-desc">ID ↓ (Highest first)</option>
+            <option value="name-asc">Name A → Z</option>
+            <option value="name-desc">Name Z → A</option>
+          </select>
         </div>
       </div>
       <div id="playersGrid" class="cards-grid"></div>
+    </section>
+
+    <!-- LEADERBOARD PAGE -->
+    <section id="page-leaderboard" class="page">
+      <div class="page-header" style="margin-bottom: 2rem;">
+        <h2 class="page-title">📊 Global Leaderboards</h2>
+        <div class="filters">
+          <select id="leaderboardFormat" onchange="loadLeaderboard()"
+            style="padding: 0.8rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg2); color: var(--primary); font-family: inherit; font-size: 0.95rem;">
+            <option value="All">All Formats</option>
+            <option value="Test">Test Matches</option>
+            <option value="ODI">ODI Matches</option>
+            <option value="T20I">T20I Matches</option>
+          </select>
+        </div>
+      </div>
+      <div id="leaderboardContent" class="cards-grid"
+        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+        <!-- Loaded dynamically -->
+      </div>
     </section>
 
     <!-- PLAYER DETAIL PAGE -->

@@ -189,6 +189,7 @@ function navigate(page) {
     case 'foryou':
       if (!currentUser) { openModal('loginModal'); return; }
       show('page-foryou'); loadForYou(); break;
+    case 'leaderboard': show('page-leaderboard'); loadLeaderboard(); break;
     case 'player-detail':   show('page-player-detail'); break;
     case 'match-detail':    show('page-match-detail'); break;
     case 'tournament-detail': show('page-tournament-detail'); break;
@@ -222,6 +223,22 @@ function filterPlayers() {
   loadPlayers(q, country, role);
 }
 
+function applySortPlayers() {
+  const sortVal = document.getElementById('sortPlayers').value;
+  if (!allPlayers || !allPlayers.length) return;
+
+  const sorted = [...allPlayers];
+  if      (sortVal === 'id-asc')   sorted.sort((a, b) => a.id - b.id);
+  else if (sortVal === 'id-desc')  sorted.sort((a, b) => b.id - a.id);
+  else if (sortVal === 'name-asc') sorted.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sortVal === 'name-desc')sorted.sort((a, b) => b.name.localeCompare(a.name));
+  else return;
+
+  const grid = document.getElementById('playersGrid');
+  grid.innerHTML = '';
+  sorted.forEach(p => grid.appendChild(playerCard(p)));
+}
+
 // ─── PLAYERS ──────────────────────────────────
 async function loadPlayers(q = '', country = '', role = '') {
   const grid = document.getElementById('playersGrid');
@@ -231,13 +248,68 @@ async function loadPlayers(q = '', country = '', role = '') {
     if (q) url += `q=${encodeURIComponent(q)}&`;
     if (country) url += `country=${encodeURIComponent(country)}&`;
     if (role) url += `role=${encodeURIComponent(role)}`;
-    
-    const res  = await fetch(url);
-    allPlayers = await res.json();
+
+    const [playersRes] = await Promise.all([
+      fetch(url)
+    ]);
+    allPlayers = await playersRes.json();
+
     grid.innerHTML = '';
     if (!allPlayers.length) { grid.innerHTML = '<p style="color:var(--muted);padding:2rem">No players found.</p>'; return; }
     allPlayers.forEach(p => grid.appendChild(playerCard(p)));
-  } catch { grid.innerHTML = '<p style="color:red;padding:2rem">Failed to load players.</p>'; }
+  } catch(e) { grid.innerHTML = '<p style="color:red;padding:2rem">Failed to load players.</p>'; console.error(e); }
+}
+
+async function loadLeaderboard() {
+  const format = document.getElementById('leaderboardFormat').value;
+  const content = document.getElementById('leaderboardContent');
+  content.innerHTML = `<div class="loader"><div class="spinner"></div> Loading rankings…</div>`;
+  
+  try {
+    const [battersRes, bowlersRes] = await Promise.all([
+      fetch(`/api/stats/top-batters?format=${format}`),
+      fetch(`/api/stats/top-bowlers?format=${format}`)
+    ]);
+    
+    const topBatters = await battersRes.json();
+    const topBowlers = await bowlersRes.json();
+    
+    content.innerHTML = `
+      <div>
+        <h3 class="section-title" style="font-size:1.1rem;margin-bottom:1rem">🏏 Highest Runs (${format === 'All' ? 'Career' : format})</h3>
+        <table class="points-table" style="font-size:0.85rem;width:100%">
+          <thead><tr><th>#</th><th>Player</th><th>Country</th><th>Runs</th></tr></thead>
+          <tbody>
+            ${topBatters.map((b,i) => `
+              <tr style="cursor:pointer" onclick="findAndOpenPlayer('${b.name}')">
+                <td>${i+1}</td>
+                <td><strong style="color:var(--primary)">${b.name}</strong></td>
+                <td>${flagEmoji(b.country)} ${b.country}</td>
+                <td><strong>${b.total_runs ?? '-'}</strong></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 class="section-title" style="font-size:1.1rem;margin-bottom:1rem">🎳 Most Wickets (${format === 'All' ? 'Career' : format})</h3>
+        <table class="points-table" style="font-size:0.85rem;width:100%">
+          <thead><tr><th>#</th><th>Player</th><th>Country</th><th>Wickets</th></tr></thead>
+          <tbody>
+            ${topBowlers.map((b,i) => `
+              <tr style="cursor:pointer" onclick="findAndOpenPlayer('${b.name}')">
+                <td>${i+1}</td>
+                <td><strong style="color:var(--primary)">${b.name}</strong></td>
+                <td>${flagEmoji(b.country)} ${b.country}</td>
+                <td><strong>${b.total_wickets ?? '-'}</strong></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (e) {
+    content.innerHTML = '<p style="color:red;padding:2rem">Failed to load leaderboard.</p>';
+    console.error(e);
+  }
 }
 
 function flagEmoji(country) {
@@ -254,11 +326,14 @@ function playerCard(p) {
   div.className = 'player-card';
   div.onclick = () => openPlayerDetail(p.id);
   div.innerHTML = `
-    <div class="player-avatar jersey-num">${jerseyNumber(p)}</div>
+    <div style="position:relative">
+      <div class="player-avatar jersey-num">${jerseyNumber(p)}</div>
+      <span style="position:absolute;top:0;right:0;background:rgba(255,255,255,0.1);color:var(--muted);font-size:0.65rem;padding:2px 6px;border-radius:999px;font-family:monospace">ID #${p.id}</span>
+    </div>
     <div class="player-name">${p.name}</div>
     <div class="player-role">${p.role}</div>
     <div class="player-country">${flagEmoji(p.country)} ${p.country}</div>
-    <span class="tag">${p.batting_style || 'Batter'}</span>
+    <span class="tag">${p.batting_style || 'Right-handed'}</span>
   `;
   return div;
 }
@@ -523,32 +598,21 @@ async function openTournamentDetail(id) {
     const res  = await fetch(`/api/tournaments/${id}`);
     const data = await res.json();
 
-    const pointsRows = (data.points || []).map((row, i) => `
-      <tr>
-        <td><strong>${i + 1}</strong></td>
-        <td>${row.team}</td>
-        <td>${row.played}</td>
-        <td>${row.won}</td>
-        <td>${row.lost}</td>
-        <td>${row.tied}</td>
-        <td><strong>${row.points}</strong></td>
-        <td>${row.nrr > 0 ? '+' : ''}${row.nrr.toFixed(3)}</td>
-      </tr>`).join('');
 
     const runsRows = (data.topRuns || []).map(r => `
       <tr>
         <td><a href="#" style="color:var(--accent);font-weight:600" onclick="findAndOpenPlayer('${r.name}');return false;">${flagEmoji(r.country)} ${r.name}</a></td>
         <td>${r.innings || '-'}</td>
-        <td><strong style="color:var(--primary)">${Math.floor(r.runs)}</strong></td>
-        <td>${r.average ? r.average.toFixed(2) : '-'}</td>
+        <td><strong style="color:var(--primary)">${Math.floor(r.runs || 0)}</strong></td>
+        <td>${r.average ? Number(r.average).toFixed(2) : '—'}</td>
       </tr>`).join('');
 
     const wicketRows = (data.topWickets || []).map(r => `
       <tr>
         <td><a href="#" style="color:var(--accent);font-weight:600" onclick="findAndOpenPlayer('${r.name}');return false;">${flagEmoji(r.country)} ${r.name}</a></td>
         <td>${r.innings || '-'}</td>
-        <td><strong style="color:var(--primary)">${Math.floor(r.wickets)}</strong></td>
-        <td>${r.average ? r.average.toFixed(2) : '-'}</td>
+        <td><strong style="color:var(--primary)">${Math.floor(r.wickets || 0)}</strong></td>
+        <td>${r.average ? Number(r.average).toFixed(2) : '—'}</td>
       </tr>`).join('');
 
     content.innerHTML = `
@@ -566,14 +630,6 @@ async function openTournamentDetail(id) {
         </div>
       </div>
 
-      ${pointsRows ? `
-      <h3 class="section-title" style="font-size:1.1rem;margin-bottom:1rem">Points Table</h3>
-      <div style="overflow-x:auto;margin-bottom:2rem">
-        <table class="points-table">
-          <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>L</th><th>T</th><th>Pts</th><th>NRR</th></tr></thead>
-          <tbody>${pointsRows}</tbody>
-        </table>
-      </div>` : ''}
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:1.5rem">
         ${runsRows ? `
@@ -600,9 +656,19 @@ async function openTournamentDetail(id) {
         <div class="cards-grid">
           ${data.matches.map(m => `
             <div class="match-card" onclick="openMatchDetail(${m.id})">
-              <div class="match-teams">${m.team1} <span class="match-vs">vs</span> ${m.team2}</div>
-              <div class="match-result" style="margin-top:0.5rem">✓ ${m.result || 'Result pending'}</div>
-              <div class="match-date" style="margin-top:0.3rem">📅 ${m.date || ''} ${m.venue ? '· ' + m.venue : ''}</div>
+              <div class="match-teams">
+                <div style="display:flex;justify-content:space-between;width:100%">
+                  <span>${m.team1}</span>
+                  <span style="font-weight:700;color:var(--primary)">${m.score_team1 || ''}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;width:100%;margin-top:0.3rem">
+                  <span>${m.team2}</span>
+                  <span style="font-weight:700;color:var(--primary)">${m.score_team2 || ''}</span>
+                </div>
+              </div>
+              <div class="match-result" style="margin-top:0.8rem;border-top:1px solid rgba(255,255,255,0.05);padding-top:0.5rem">✓ ${m.result || 'Result pending'}</div>
+              ${m.man_of_match_name ? `<div class="match-mom" style="color:var(--accent);font-weight:600;margin-top:.4rem;font-size:0.8rem">⭐ MOM: ${m.man_of_match_name}</div>` : ''}
+              <div class="match-date" style="margin-top:0.3rem;font-size:0.75rem;opacity:0.8">📅 ${m.date || ''} ${m.venue ? '· ' + m.venue : ''}</div>
             </div>
           `).join('')}
         </div>

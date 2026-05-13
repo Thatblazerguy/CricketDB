@@ -1,14 +1,9 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-let _db;
-function getDb() {
-  if (!_db) {
-    _db = new Database(path.join(__dirname, 'cricket.db'));
-    _db.pragma('journal_mode = WAL');
-    _db.pragma('foreign_keys = ON');
-  }
-  return _db;
-}
+const db = new Database(path.join(__dirname, 'cricket.db'));
+db.pragma('journal_mode = WAL');
 
-module.exports = { getDb };
+module.exports = {
+  getDb: () => db
+};
